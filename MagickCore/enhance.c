@@ -1595,6 +1595,11 @@ MagickExport MagickBooleanType ContrastStretchImage(Image *image,
   assert(image->signature == MagickCoreSignature);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
+  if (AccelerateContrastStretchImage(image,black_point,white_point,
+        exception) != MagickFalse)
+    return(MagickTrue);
+#endif
   type=IdentifyImageType(image,exception);
   if (IsGrayImageType(type) != MagickFalse)
     (void) SetImageColorspace(image,GRAYColorspace,exception);

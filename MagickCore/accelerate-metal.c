@@ -51,6 +51,13 @@
 #if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
 
 /*
+  Metal kernels treat the pixel cache as float arrays. Verify that Quantum
+  is float at compile time to prevent silent data corruption.
+*/
+_Static_assert(sizeof(Quantum) == sizeof(float),
+  "Metal acceleration requires HDRI float Quantum (sizeof(Quantum) must equal sizeof(float))");
+
+/*
   AcquirePixelCacheBuffer — creates an MTLBuffer from the image's pixel cache.
   Tries zero-copy first (newBufferWithBytesNoCopy), falls back to a copy.
   Sets *is_nocopy to indicate which path was taken.
@@ -713,7 +720,7 @@ MagickPrivate MagickBooleanType AccelerateModulateImageMetal(Image *image,
       ((image->rows + local_work_size[1] - 1) / local_work_size[1]);
 
     status = EnqueueMetalKernel2DEx(device, kernel, global_work_size,
-      local_work_size, 0, args, 7);
+      local_work_size, 0, args, 8);
   }
 
   if (status == MagickTrue)

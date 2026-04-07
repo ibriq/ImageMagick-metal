@@ -641,6 +641,9 @@ MagickPrivate MagickBooleanType EnqueueMetalKernel(
   [commandBuffer commit];
   [commandBuffer waitUntilCompleted];
 
+  if (commandBuffer.status == MTLCommandBufferStatusError)
+    return MagickFalse;
+
   return MagickTrue;
 }
 
@@ -719,6 +722,8 @@ MagickPrivate MagickBooleanType EnqueueMetalKernel2D(
       pipelineState.maxTotalThreadsPerThreadgroup)
   {
     [computeEncoder endEncoding];
+    [commandBuffer commit];
+    [commandBuffer waitUntilCompleted];
     return MagickFalse;
   }
 
@@ -728,6 +733,9 @@ MagickPrivate MagickBooleanType EnqueueMetalKernel2D(
   [computeEncoder endEncoding];
   [commandBuffer commit];
   [commandBuffer waitUntilCompleted];
+
+  if (commandBuffer.status == MTLCommandBufferStatusError)
+    return MagickFalse;
 
   return MagickTrue;
 }
@@ -804,6 +812,8 @@ MagickPrivate MagickBooleanType EnqueueMetalKernel2DEx(
       pipelineState.maxTotalThreadsPerThreadgroup)
   {
     [encoder endEncoding];
+    [commandBuffer commit];
+    [commandBuffer waitUntilCompleted];
     return MagickFalse;
   }
 
@@ -812,6 +822,9 @@ MagickPrivate MagickBooleanType EnqueueMetalKernel2DEx(
   [encoder endEncoding];
   [commandBuffer commit];
   [commandBuffer waitUntilCompleted];
+
+  if (commandBuffer.status == MTLCommandBufferStatusError)
+    return MagickFalse;
 
   return MagickTrue;
 }

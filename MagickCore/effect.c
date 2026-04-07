@@ -4296,7 +4296,7 @@ MagickExport Image *UnsharpMaskImage(const Image *image,const double radius,
   assert(exception->signature == MagickCoreSignature);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
-#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
   unsharp_image=AccelerateUnsharpMaskImage(image,radius,sigma,gain,threshold,
     exception);
   if (unsharp_image != (Image *) NULL)
