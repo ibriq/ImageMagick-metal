@@ -39,6 +39,13 @@ MAGICKCORE_METAL_SRCS =
 if MAGICKCORE_METAL_SUPPORT
 MAGICKCORE_METAL_SRCS = MagickCore/metal.m MagickCore/accelerate-metal.c
 endif
+# Override the linker for libMagickCore — automake picks OBJCLD due to
+# the .m file but libtool cannot always infer the ObjC tag.  The C
+# linker works because the Metal frameworks are passed via LIBADD.
+MagickCore_libMagickCore_@MAGICK_MAJOR_VERSION@_@MAGICK_ABI_SUFFIX@_la_LINK = \
+	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(MagickCore_libMagickCore_@MAGICK_MAJOR_VERSION@_@MAGICK_ABI_SUFFIX@_la_LDFLAGS) $(LDFLAGS) -o $@
 
 MAGICKCORE_MANS = \
   MagickCore/MagickCore-config.1
