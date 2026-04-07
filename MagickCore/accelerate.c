@@ -748,6 +748,7 @@ MagickPrivate MagickBooleanType AccelerateContrastImage(Image *image,
   MagickBooleanType
     status;
 
+  (void) status;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -1323,6 +1324,7 @@ MagickPrivate MagickBooleanType AccelerateContrastStretchImage(
   MagickBooleanType
     status;
 
+  (void) status;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -1740,6 +1742,7 @@ MagickPrivate Image *AccelerateDespeckleImage(const Image* image,
   Image
     *filteredImage;
 
+  (void) filteredImage;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
 
@@ -2200,6 +2203,7 @@ MagickPrivate MagickBooleanType AccelerateEqualizeImage(Image *image,
   MagickBooleanType
     status;
 
+  (void) status;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -2368,6 +2372,7 @@ MagickPrivate MagickBooleanType AccelerateFunctionImage(Image *image,
   MagickBooleanType
     status;
 
+  (void) status;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -2510,6 +2515,7 @@ MagickPrivate MagickBooleanType AccelerateGrayscaleImage(Image* image,
   MagickBooleanType
     status;
 
+  (void) status;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -2889,6 +2895,7 @@ MagickPrivate Image *AccelerateLocalContrastImage(const Image *image,
   Image
     *filteredImage;
 
+  (void) filteredImage;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
 
@@ -3112,6 +3119,7 @@ MagickPrivate MagickBooleanType AccelerateModulateImage(Image *image,
   MagickBooleanType
     status;
 
+  (void) status;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -3514,6 +3522,7 @@ MagickPrivate Image *AccelerateMotionBlurImage(const Image *image,
   Image
     *filteredImage;
 
+  (void) filteredImage;
   assert(image != NULL);
   assert(kernel != (double *) NULL);
   assert(offset != (OffsetInfo *) NULL);
@@ -4094,6 +4103,7 @@ MagickPrivate Image *AccelerateResizeImage(const Image *image,
   Image
     *filteredImage;
 
+  (void) filteredImage;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
 
@@ -4315,6 +4325,7 @@ MagickPrivate Image* AccelerateRotationalBlurImage(const Image *image,
   Image
     *filteredImage;
 
+  (void) filteredImage;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -4690,6 +4701,7 @@ MagickPrivate Image *AccelerateUnsharpMaskImage(const Image *image,
   Image
     *filteredImage;
 
+  (void) filteredImage;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
 
@@ -4874,6 +4886,7 @@ MagickPrivate Image *AccelerateWaveletDenoiseImage(const Image *image,
   Image
     *filteredImage;
 
+  (void) filteredImage;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *)NULL);
 

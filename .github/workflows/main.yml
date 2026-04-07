@@ -88,7 +88,7 @@ jobs:
         run: |
           export CFLAGS="-Wall -Wextra -Wdeclaration-after-statement -Wno-deprecated-declarations -Wno-incompatible-library-redeclaration -Wno-incompatible-pointer-types-discards-qualifiers -Wno-missing-declarations -Wno-unused-function -Wno-unused-parameter"
           autoreconf -fiv
-          ./configure --with-quantum-depth=16 --enable-hdri=no --without-perl --with-fftw --with-flif
+          ./configure --with-quantum-depth=16 --enable-hdri=no --without-perl --with-fftw --with-flif --disable-metal
 
       - name: Build ImageMagick
         run: |
@@ -115,7 +115,7 @@ jobs:
           export CFLAGS="-Wall -Wextra -Werror -Wdeclaration-after-statement -Wno-deprecated-declarations -Wno-incompatible-library-redeclaration -Wno-incompatible-pointer-types-discards-qualifiers -Wno-missing-declarations -Wno-unused-function -Wno-unused-parameter"
           export LDFLAGS=$(pkg-config --libs libjpeg)
           autoreconf -fiv
-          ./configure --with-quantum-depth=16 --enable-hdri=no --without-perl --with-fftw --with-flif --with-rsvg
+          ./configure --with-quantum-depth=16 --enable-hdri=no --without-perl --with-fftw --with-flif --with-rsvg --disable-metal
 
       - name: Build ImageMagick
         run: |

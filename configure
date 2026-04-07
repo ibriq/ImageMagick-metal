@@ -5492,7 +5492,7 @@ MAGICK_PATCHLEVEL_VERSION=19
 
 MAGICK_VERSION=7.1.2-19
 
-MAGICK_GIT_REVISION=d25609c77:20260406
+MAGICK_GIT_REVISION=9fa05cee3:20260408
 
 
 # Substitute library versioning
@@ -5526,7 +5526,7 @@ PACKAGE_LIB_VERSION=0x712
 
 PACKAGE_LIB_VERSION_NUMBER=7,1,2,19
 
-PACKAGE_RELEASE_DATE=2026-04-06
+PACKAGE_RELEASE_DATE=2026-04-08
 
 
 # Ensure that make can run correctly
@@ -8858,7 +8858,9 @@ else
 fi
 
 
-ac_ext=m
+case "$host_os" in
+  darwin*)
+    ac_ext=m
 ac_cpp='$OBJCPP $CPPFLAGS'
 ac_compile='$OBJC -c $OBJCFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$OBJC -o conftest$ac_exeext $OBJCFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -9262,6 +9264,22 @@ else
 fi
 
 
+    ;;
+  *)
+         if false; then
+  am__fastdepOBJC_TRUE=
+  am__fastdepOBJC_FALSE='#'
+else
+  am__fastdepOBJC_TRUE='#'
+  am__fastdepOBJC_FALSE=
+fi
+
+    OBJC="$CC"
+
+    OBJCFLAGS="$CFLAGS"
+
+    ;;
+esac
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -41620,6 +41638,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCXX\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${am__fastdepOBJC_TRUE}" && test -z "${am__fastdepOBJC_FALSE}"; then
+  as_fn_error $? "conditional \"am__fastdepOBJC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepOBJC_TRUE}" && test -z "${am__fastdepOBJC_FALSE}"; then

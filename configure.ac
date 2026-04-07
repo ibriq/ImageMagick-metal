@@ -282,7 +282,19 @@ AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_OBJC
+case "$host_os" in
+  darwin*)
+    AC_PROG_OBJC
+    ;;
+  *)
+    dnl Provide ObjC stubs so automake-generated rules do not fail.
+    AM_CONDITIONAL([am__fastdepOBJC], [false])
+    OBJC="$CC"
+    AC_SUBST([OBJC])
+    OBJCFLAGS="$CFLAGS"
+    AC_SUBST([OBJCFLAGS])
+    ;;
+esac
 AC_PROG_CPP
 LT_PATH_LD
 AC_SUBST([LD])
