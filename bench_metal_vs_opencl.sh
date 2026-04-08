@@ -13,17 +13,17 @@ bench_op() {
 
   echo "  Metal:"
   for i in $(seq 1 $RUNS); do
-    MAGICK_OCL_DEVICE=OFF time $MAGICK -size $SIZE xc: +noise Random $op /dev/null 2>/dev/null
+    MAGICK_OCL_DEVICE=OFF time $MAGICK -size $SIZE xc: +noise Random $op null: 2>&1
   done
 
   echo "  OpenCL:"
   for i in $(seq 1 $RUNS); do
-    MAGICK_DISABLE_METAL=1 MAGICK_OCL_DEVICE=GPU time $MAGICK -size $SIZE xc: +noise Random $op /dev/null 2>/dev/null
+    MAGICK_DISABLE_METAL=1 MAGICK_OCL_DEVICE=GPU time $MAGICK -size $SIZE xc: +noise Random $op null: 2>&1
   done
 
   echo "  CPU:"
   for i in $(seq 1 $RUNS); do
-    MAGICK_DISABLE_METAL=1 MAGICK_OCL_DEVICE=OFF time $MAGICK -size $SIZE xc: +noise Random $op /dev/null 2>/dev/null
+    MAGICK_DISABLE_METAL=1 MAGICK_OCL_DEVICE=OFF time $MAGICK -size $SIZE xc: +noise Random $op null: 2>&1
   done
   echo ""
 }
