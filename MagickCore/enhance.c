@@ -1427,7 +1427,7 @@ MagickExport MagickBooleanType ContrastImage(Image *image,
 
   assert(image != (Image *) NULL);
   assert(image->signature == MagickCoreSignature);
-#if defined(MAGICKCORE_OPENCL_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
   if (AccelerateContrastImage(image,sharpen,exception) != MagickFalse)
     return(MagickTrue);
 #endif
@@ -1595,6 +1595,11 @@ MagickExport MagickBooleanType ContrastStretchImage(Image *image,
   assert(image->signature == MagickCoreSignature);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
+  if (AccelerateContrastStretchImage(image,black_point,white_point,
+        exception) != MagickFalse)
+    return(MagickTrue);
+#endif
   type=IdentifyImageType(image,exception);
   if (IsGrayImageType(type) != MagickFalse)
     (void) SetImageColorspace(image,GRAYColorspace,exception);
@@ -2081,7 +2086,7 @@ MagickExport MagickBooleanType EqualizeImage(Image *image,
   */
   assert(image != (Image *) NULL);
   assert(image->signature == MagickCoreSignature);
-#if defined(MAGICKCORE_OPENCL_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
   if (AccelerateEqualizeImage(image,exception) != MagickFalse)
     return(MagickTrue);
 #endif
@@ -2511,7 +2516,7 @@ MagickExport MagickBooleanType GrayscaleImage(Image *image,
       if (SetImageStorageClass(image,DirectClass,exception) == MagickFalse)
         return(MagickFalse);
     }
-#if defined(MAGICKCORE_OPENCL_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
   if (AccelerateGrayscaleImage(image,method,exception) != MagickFalse)
     {
       image->intensity=method;
@@ -3799,7 +3804,7 @@ MagickExport MagickBooleanType ModulateImage(Image *image,const char *modulate,
   /*
     Modulate image.
   */
-#if defined(MAGICKCORE_OPENCL_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
   if (AccelerateModulateImage(image,percent_brightness,percent_hue,
         percent_saturation,colorspace,exception) != MagickFalse)
     return(MagickTrue);

@@ -81,7 +81,7 @@ Include declarations.
 #define MAGICK_MAX(x,y) (((x) >= (y))?(x):(y))
 #define MAGICK_MIN(x,y) (((x) <= (y))?(x):(y))
 
-#if defined(MAGICKCORE_OPENCL_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
 
 /*
   Define declarations.
@@ -218,6 +218,7 @@ static MagickBooleanType checkHistogramCondition(const Image *image,
   return(checkPixelIntensity(image,method));
 }
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static MagickCLEnv getOpenCLEnvironment(ExceptionInfo* exception)
 {
   MagickCLEnv
@@ -590,16 +591,11 @@ cleanup:
 
   return(filteredImage);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate Image* AccelerateBlurImage(const Image *image,
   const double radius,const double sigma,ExceptionInfo *exception)
 {
-  Image
-    *filteredImage;
-
-  MagickCLEnv
-    clEnv;
-
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -608,12 +604,37 @@ MagickPrivate Image* AccelerateBlurImage(const Image *image,
   if (checkAccelerateCondition(image) == MagickFalse)
     return((Image *) NULL);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return((Image *) NULL);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  {
+    Image
+      *metal_image;
 
-  filteredImage=ComputeBlurImage(image,clEnv,radius,sigma,exception);
-  return(filteredImage);
+    metal_image = CloneImage(image, 0, 0, MagickTrue, exception);
+    if (metal_image != (Image *) NULL)
+    {
+      if (AccelerateBlurImageMetal(metal_image, radius, sigma, exception) != MagickFalse)
+        return(metal_image);
+      metal_image = DestroyImage(metal_image);
+    }
+  }
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    Image
+      *filteredImage;
+
+    MagickCLEnv
+      clEnv;
+
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return((Image *) NULL);
+    filteredImage=ComputeBlurImage(image,clEnv,radius,sigma,exception);
+    return(filteredImage);
+  }
+#else
+  return((Image *) NULL);
+#endif
 }
 
 /*
@@ -628,6 +649,7 @@ MagickPrivate Image* AccelerateBlurImage(const Image *image,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static MagickBooleanType ComputeContrastImage(Image *image,MagickCLEnv clEnv,
   const MagickBooleanType sharpen,ExceptionInfo *exception)
 {
@@ -718,6 +740,7 @@ cleanup:
 
   return(outputReady);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate MagickBooleanType AccelerateContrastImage(Image *image,
   const MagickBooleanType sharpen,ExceptionInfo *exception)
@@ -725,9 +748,7 @@ MagickPrivate MagickBooleanType AccelerateContrastImage(Image *image,
   MagickBooleanType
     status;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) status;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -736,12 +757,23 @@ MagickPrivate MagickBooleanType AccelerateContrastImage(Image *image,
   if (checkAccelerateCondition(image) == MagickFalse)
     return(MagickFalse);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return(MagickFalse);
-
-  status=ComputeContrastImage(image,clEnv,sharpen,exception);
-  return(status);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  status=AccelerateContrastImageMetal(image,sharpen,exception);
+  if (status != MagickFalse)
+    return(status);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return(MagickFalse);
+    status=ComputeContrastImage(image,clEnv,sharpen,exception);
+    return(status);
+  }
+#else
+  return(MagickFalse);
+#endif
 }
 
 /*
@@ -756,6 +788,7 @@ MagickPrivate MagickBooleanType AccelerateContrastImage(Image *image,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static MagickBooleanType ComputeContrastStretchImage(Image *image,
   MagickCLEnv clEnv,const double black_point,const double white_point,
   ExceptionInfo *exception)
@@ -1282,6 +1315,7 @@ cleanup:
 
   return(outputReady);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate MagickBooleanType AccelerateContrastStretchImage(
   Image *image,const double black_point,const double white_point,
@@ -1290,9 +1324,7 @@ MagickPrivate MagickBooleanType AccelerateContrastStretchImage(
   MagickBooleanType
     status;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) status;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -1302,13 +1334,24 @@ MagickPrivate MagickBooleanType AccelerateContrastStretchImage(
       (checkHistogramCondition(image,image->intensity) == MagickFalse))
     return(MagickFalse);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return(MagickFalse);
-
-  status=ComputeContrastStretchImage(image,clEnv,black_point,white_point,
-    exception);
-  return(status);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  status=AccelerateContrastStretchImageMetal(image,black_point,white_point,exception);
+  if (status != MagickFalse)
+    return(status);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return(MagickFalse);
+    status=ComputeContrastStretchImage(image,clEnv,black_point,white_point,
+      exception);
+    return(status);
+  }
+#else
+  return(MagickFalse);
+#endif
 }
 
 /*
@@ -1323,6 +1366,7 @@ MagickPrivate MagickBooleanType AccelerateContrastStretchImage(
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static Image *ComputeDespeckleImage(const Image *image,MagickCLEnv clEnv,
   ExceptionInfo*exception)
 {
@@ -1690,6 +1734,7 @@ cleanup:
 
   return(filteredImage);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate Image *AccelerateDespeckleImage(const Image* image,
   ExceptionInfo* exception)
@@ -1697,21 +1742,30 @@ MagickPrivate Image *AccelerateDespeckleImage(const Image* image,
   Image
     *filteredImage;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) filteredImage;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
 
   if (checkAccelerateConditionRGBA(image) == MagickFalse)
     return((Image *) NULL);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return((Image *) NULL);
-
-  filteredImage=ComputeDespeckleImage(image,clEnv,exception);
-  return(filteredImage);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  filteredImage=AccelerateDespeckleImageMetal(image,exception);
+  if (filteredImage != (Image *) NULL)
+    return(filteredImage);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return((Image *) NULL);
+    filteredImage=ComputeDespeckleImage(image,clEnv,exception);
+    return(filteredImage);
+  }
+#else
+  return((Image *) NULL);
+#endif
 }
 
 /*
@@ -1726,6 +1780,7 @@ MagickPrivate Image *AccelerateDespeckleImage(const Image* image,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static MagickBooleanType ComputeEqualizeImage(Image *image,MagickCLEnv clEnv,
   ExceptionInfo *exception)
 {
@@ -2140,6 +2195,7 @@ cleanup:
 
   return(outputReady);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate MagickBooleanType AccelerateEqualizeImage(Image *image,
   ExceptionInfo *exception)
@@ -2147,9 +2203,7 @@ MagickPrivate MagickBooleanType AccelerateEqualizeImage(Image *image,
   MagickBooleanType
     status;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) status;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -2159,12 +2213,23 @@ MagickPrivate MagickBooleanType AccelerateEqualizeImage(Image *image,
       (checkHistogramCondition(image,image->intensity) == MagickFalse))
     return(MagickFalse);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return(MagickFalse);
-
-  status=ComputeEqualizeImage(image,clEnv,exception);
-  return(status);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  status=AccelerateEqualizeImageMetal(image,exception);
+  if (status != MagickFalse)
+    return(status);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return(MagickFalse);
+    status=ComputeEqualizeImage(image,clEnv,exception);
+    return(status);
+  }
+#else
+  return(MagickFalse);
+#endif
 }
 
 /*
@@ -2179,6 +2244,7 @@ MagickPrivate MagickBooleanType AccelerateEqualizeImage(Image *image,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static MagickBooleanType ComputeFunctionImage(Image *image,MagickCLEnv clEnv,
   const MagickFunction function,const size_t number_parameters,
   const double *parameters,ExceptionInfo *exception)
@@ -2297,6 +2363,7 @@ cleanup:
     ReleaseOpenCLDevice(device);
   return(outputReady);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate MagickBooleanType AccelerateFunctionImage(Image *image,
   const MagickFunction function,const size_t number_parameters,
@@ -2305,9 +2372,7 @@ MagickPrivate MagickBooleanType AccelerateFunctionImage(Image *image,
   MagickBooleanType
     status;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) status;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -2316,13 +2381,24 @@ MagickPrivate MagickBooleanType AccelerateFunctionImage(Image *image,
   if (checkAccelerateCondition(image) == MagickFalse)
     return(MagickFalse);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return(MagickFalse);
-
-  status=ComputeFunctionImage(image,clEnv,function,number_parameters,
-    parameters,exception);
-  return(status);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  status=AccelerateFunctionImageMetal(image,function,number_parameters,parameters,exception);
+  if (status != MagickFalse)
+    return(status);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return(MagickFalse);
+    status=ComputeFunctionImage(image,clEnv,function,number_parameters,
+      parameters,exception);
+    return(status);
+  }
+#else
+  return(MagickFalse);
+#endif
 }
 
 /*
@@ -2337,6 +2413,7 @@ MagickPrivate MagickBooleanType AccelerateFunctionImage(Image *image,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static MagickBooleanType ComputeGrayscaleImage(Image *image,MagickCLEnv clEnv,
   const PixelIntensityMethod method,ExceptionInfo *exception)
 {
@@ -2430,6 +2507,7 @@ cleanup:
 
   return(outputReady);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate MagickBooleanType AccelerateGrayscaleImage(Image* image,
   const PixelIntensityMethod method,ExceptionInfo *exception)
@@ -2437,9 +2515,7 @@ MagickPrivate MagickBooleanType AccelerateGrayscaleImage(Image* image,
   MagickBooleanType
     status;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) status;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -2457,12 +2533,23 @@ MagickPrivate MagickBooleanType AccelerateGrayscaleImage(Image* image,
       (GetPixelBlueTraits(image) == UndefinedPixelTrait))
     return(MagickFalse);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return(MagickFalse);
-
-  status=ComputeGrayscaleImage(image,clEnv,method,exception);
-  return(status);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  status=AccelerateGrayscaleImageMetal(image,method,exception);
+  if (status != MagickFalse)
+    return(status);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return(MagickFalse);
+    status=ComputeGrayscaleImage(image,clEnv,method,exception);
+    return(status);
+  }
+#else
+  return(MagickFalse);
+#endif
 }
 
 /*
@@ -2477,6 +2564,7 @@ MagickPrivate MagickBooleanType AccelerateGrayscaleImage(Image* image,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static Image *ComputeLocalContrastImage(const Image *image,MagickCLEnv clEnv,
   const double radius,const double strength,ExceptionInfo *exception)
 {
@@ -2799,6 +2887,7 @@ cleanup:
 
   return(filteredImage);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate Image *AccelerateLocalContrastImage(const Image *image,
   const double radius,const double strength,ExceptionInfo *exception)
@@ -2806,22 +2895,31 @@ MagickPrivate Image *AccelerateLocalContrastImage(const Image *image,
   Image
     *filteredImage;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) filteredImage;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
 
   if (checkAccelerateConditionRGBA(image) == MagickFalse)
     return((Image *) NULL);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return((Image *) NULL);
-
-  filteredImage=ComputeLocalContrastImage(image,clEnv,radius,strength,
-    exception);
-  return(filteredImage);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  filteredImage=AccelerateLocalContrastImageMetal(image,radius,strength,exception);
+  if (filteredImage != (Image *) NULL)
+    return(filteredImage);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return((Image *) NULL);
+    filteredImage=ComputeLocalContrastImage(image,clEnv,radius,strength,
+      exception);
+    return(filteredImage);
+  }
+#else
+  return((Image *) NULL);
+#endif
 }
 
 /*
@@ -2836,6 +2934,7 @@ MagickPrivate Image *AccelerateLocalContrastImage(const Image *image,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static MagickBooleanType ComputeModulateImage(Image *image,MagickCLEnv clEnv,
   const double percent_brightness,const double percent_hue,
   const double percent_saturation,const ColorspaceType colorspace,
@@ -3010,6 +3109,7 @@ cleanup:
   return outputReady;
 
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate MagickBooleanType AccelerateModulateImage(Image *image,
   const double percent_brightness,const double percent_hue,
@@ -3019,9 +3119,7 @@ MagickPrivate MagickBooleanType AccelerateModulateImage(Image *image,
   MagickBooleanType
     status;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) status;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -3033,13 +3131,24 @@ MagickPrivate MagickBooleanType AccelerateModulateImage(Image *image,
   if ((colorspace != HSLColorspace) && (colorspace != UndefinedColorspace))
     return(MagickFalse);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return(MagickFalse);
-
-  status=ComputeModulateImage(image,clEnv,percent_brightness,percent_hue,
-    percent_saturation,colorspace,exception);
-  return(status);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  status=AccelerateModulateImageMetal(image,percent_brightness,percent_hue,percent_saturation,colorspace,exception);
+  if (status != MagickFalse)
+    return(status);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return(MagickFalse);
+    status=ComputeModulateImage(image,clEnv,percent_brightness,percent_hue,
+      percent_saturation,colorspace,exception);
+    return(status);
+  }
+#else
+  return(MagickFalse);
+#endif
 }
 
 /*
@@ -3054,6 +3163,7 @@ MagickPrivate MagickBooleanType AccelerateModulateImage(Image *image,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static Image* ComputeMotionBlurImage(const Image *image,MagickCLEnv clEnv,
   const double *kernel,const size_t width,const OffsetInfo *offset,
   ExceptionInfo *exception)
@@ -3403,6 +3513,7 @@ cleanup:
 
   return(filteredImage);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate Image *AccelerateMotionBlurImage(const Image *image,
   const double* kernel,const size_t width,const OffsetInfo *offset,
@@ -3411,9 +3522,7 @@ MagickPrivate Image *AccelerateMotionBlurImage(const Image *image,
   Image
     *filteredImage;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) filteredImage;
   assert(image != NULL);
   assert(kernel != (double *) NULL);
   assert(offset != (OffsetInfo *) NULL);
@@ -3422,13 +3531,24 @@ MagickPrivate Image *AccelerateMotionBlurImage(const Image *image,
   if (checkAccelerateConditionRGBA(image) == MagickFalse)
     return((Image *) NULL);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return((Image *) NULL);
-
-  filteredImage=ComputeMotionBlurImage(image,clEnv,kernel,width,offset,
-    exception);
-  return(filteredImage);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  filteredImage=AccelerateMotionBlurImageMetal(image,kernel,width,offset,exception);
+  if (filteredImage != (Image *) NULL)
+    return(filteredImage);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return((Image *) NULL);
+    filteredImage=ComputeMotionBlurImage(image,clEnv,kernel,width,offset,
+      exception);
+    return(filteredImage);
+  }
+#else
+  return((Image *) NULL);
+#endif
 }
 
 /*
@@ -3443,6 +3563,7 @@ MagickPrivate Image *AccelerateMotionBlurImage(const Image *image,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static MagickBooleanType resizeHorizontalFilter(MagickCLDevice device,
   cl_command_queue queue,const Image *image,Image *filteredImage,
   cl_mem imageBuffer,cl_uint number_channels,cl_uint columns,cl_uint rows,
@@ -3957,6 +4078,7 @@ cleanup:
 
   return(filteredImage);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 static MagickBooleanType gpuSupportedResizeWeighting(
   ResizeWeightingFunctionType f)
@@ -3981,9 +4103,7 @@ MagickPrivate Image *AccelerateResizeImage(const Image *image,
   Image
     *filteredImage;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) filteredImage;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
 
@@ -3996,13 +4116,24 @@ MagickPrivate Image *AccelerateResizeImage(const Image *image,
          resizeFilter)) == MagickFalse))
     return((Image *) NULL);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return((Image *) NULL);
-
-  filteredImage=ComputeResizeImage(image,clEnv,resizedColumns,resizedRows,
-    resizeFilter,exception);
-  return(filteredImage);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  filteredImage=AccelerateResizeImageMetal(image,resizedColumns,resizedRows,resizeFilter,exception);
+  if (filteredImage != (Image *) NULL)
+    return(filteredImage);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return((Image *) NULL);
+    filteredImage=ComputeResizeImage(image,clEnv,resizedColumns,resizedRows,
+      resizeFilter,exception);
+    return(filteredImage);
+  }
+#else
+  return((Image *) NULL);
+#endif
 }
 
 /*
@@ -4017,6 +4148,7 @@ MagickPrivate Image *AccelerateResizeImage(const Image *image,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static Image* ComputeRotationalBlurImage(const Image *image,MagickCLEnv clEnv,
   const double angle,ExceptionInfo *exception)
 {
@@ -4185,6 +4317,7 @@ cleanup:
 
   return(filteredImage);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate Image* AccelerateRotationalBlurImage(const Image *image,
   const double angle,ExceptionInfo *exception)
@@ -4192,9 +4325,7 @@ MagickPrivate Image* AccelerateRotationalBlurImage(const Image *image,
   Image
     *filteredImage;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) filteredImage;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
   if (IsEventLogging() != MagickFalse)
@@ -4203,12 +4334,23 @@ MagickPrivate Image* AccelerateRotationalBlurImage(const Image *image,
   if (checkAccelerateCondition(image) == MagickFalse)
     return((Image *) NULL);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return((Image *) NULL);
-
-  filteredImage=ComputeRotationalBlurImage(image,clEnv,angle,exception);
-  return filteredImage;
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  filteredImage=AccelerateRotationalBlurImageMetal(image,angle,exception);
+  if (filteredImage != (Image *) NULL)
+    return(filteredImage);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return((Image *) NULL);
+    filteredImage=ComputeRotationalBlurImage(image,clEnv,angle,exception);
+    return filteredImage;
+  }
+#else
+  return((Image *) NULL);
+#endif
 }
 
 /*
@@ -4223,6 +4365,7 @@ MagickPrivate Image* AccelerateRotationalBlurImage(const Image *image,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 */
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static Image *ComputeUnsharpMaskImage(const Image *image,MagickCLEnv clEnv,
   const double radius,const double sigma,const double gain,
   const double threshold,ExceptionInfo *exception)
@@ -4549,6 +4692,7 @@ cleanup:
 
   return(filteredImage);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate Image *AccelerateUnsharpMaskImage(const Image *image,
   const double radius,const double sigma,const double gain,
@@ -4557,28 +4701,38 @@ MagickPrivate Image *AccelerateUnsharpMaskImage(const Image *image,
   Image
     *filteredImage;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) filteredImage;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *) NULL);
 
   if (checkAccelerateCondition(image) == MagickFalse)
     return((Image *) NULL);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return((Image *) NULL);
-
-  if (radius < 12.1)
-    filteredImage=ComputeUnsharpMaskImageSingle(image,clEnv,radius,sigma,gain,
-      threshold,exception);
-  else
-    filteredImage=ComputeUnsharpMaskImage(image,clEnv,radius,sigma,gain,
-      threshold,exception);
-  return(filteredImage);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  filteredImage=AccelerateUnsharpMaskImageMetal(image,radius,sigma,gain,threshold,exception);
+  if (filteredImage != (Image *) NULL)
+    return(filteredImage);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return((Image *) NULL);
+    if (radius < 12.1)
+      filteredImage=ComputeUnsharpMaskImageSingle(image,clEnv,radius,sigma,gain,
+        threshold,exception);
+    else
+      filteredImage=ComputeUnsharpMaskImage(image,clEnv,radius,sigma,gain,
+        threshold,exception);
+    return(filteredImage);
+  }
+#else
+  return((Image *) NULL);
+#endif
 }
 
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
 static Image *ComputeWaveletDenoiseImage(const Image *image,MagickCLEnv clEnv,
   const double threshold,ExceptionInfo *exception)
 {
@@ -4724,6 +4878,7 @@ cleanup:
 
   return(filteredImage);
 }
+#endif /* MAGICKCORE_OPENCL_SUPPORT */
 
 MagickPrivate Image *AccelerateWaveletDenoiseImage(const Image *image,
   const double threshold,ExceptionInfo *exception)
@@ -4731,21 +4886,29 @@ MagickPrivate Image *AccelerateWaveletDenoiseImage(const Image *image,
   Image
     *filteredImage;
 
-  MagickCLEnv
-    clEnv;
-
+  (void) filteredImage;
   assert(image != NULL);
   assert(exception != (ExceptionInfo *)NULL);
 
   if (checkAccelerateCondition(image) == MagickFalse)
     return((Image *) NULL);
 
-  clEnv=getOpenCLEnvironment(exception);
-  if (clEnv == (MagickCLEnv) NULL)
-    return((Image *) NULL);
-
-  filteredImage=ComputeWaveletDenoiseImage(image,clEnv,threshold,exception);
-
-  return(filteredImage);
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+  filteredImage=AccelerateWaveletDenoiseImageMetal(image,threshold,exception);
+  if (filteredImage != (Image *) NULL)
+    return(filteredImage);
+#endif
+#if defined(MAGICKCORE_OPENCL_SUPPORT)
+  {
+    MagickCLEnv clEnv;
+    clEnv=getOpenCLEnvironment(exception);
+    if (clEnv == (MagickCLEnv) NULL)
+      return((Image *) NULL);
+    filteredImage=ComputeWaveletDenoiseImage(image,clEnv,threshold,exception);
+    return(filteredImage);
+  }
+#else
+  return((Image *) NULL);
+#endif
 }
-#endif /* MAGICKCORE_OPENCL_SUPPORT */
+#endif /* MAGICKCORE_OPENCL_SUPPORT || MAGICKCORE_METAL_SUPPORT */

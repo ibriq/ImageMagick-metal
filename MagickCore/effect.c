@@ -781,7 +781,7 @@ MagickExport Image *BlurImage(const Image *image,const double radius,
   assert(exception->signature == MagickCoreSignature);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
-#if defined(MAGICKCORE_OPENCL_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
   blur_image=AccelerateBlurImage(image,radius,sigma,exception);
   if (blur_image != (Image *) NULL)
     return(blur_image);
@@ -1352,7 +1352,7 @@ MagickExport Image *DespeckleImage(const Image *image,ExceptionInfo *exception)
   assert(exception->signature == MagickCoreSignature);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
-#if defined(MAGICKCORE_OPENCL_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
   despeckle_image=AccelerateDespeckleImage(image,exception);
   if (despeckle_image != (Image *) NULL)
     return(despeckle_image);
@@ -2061,7 +2061,7 @@ MagickExport Image *LocalContrastImage(const Image *image,const double radius,
   assert(exception->signature == MagickCoreSignature);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
-#if defined(MAGICKCORE_OPENCL_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
   contrast_image=AccelerateLocalContrastImage(image,radius,strength,exception);
   if (contrast_image != (Image *) NULL)
     return(contrast_image);
@@ -2419,7 +2419,7 @@ MagickExport Image *MotionBlurImage(const Image *image,const double radius,
   /*
     Motion blur image.
   */
-#if defined(MAGICKCORE_OPENCL_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
   blur_image=AccelerateMotionBlurImage(image,kernel,width,offset,exception);
   if (blur_image != (Image *) NULL)
     {
@@ -3181,7 +3181,7 @@ MagickExport Image *RotationalBlurImage(const Image *image,const double angle,
   assert(exception->signature == MagickCoreSignature);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
-#if defined(MAGICKCORE_OPENCL_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
   blur_image=AccelerateRotationalBlurImage(image,angle,exception);
   if (blur_image != (Image *) NULL)
     return(blur_image);
@@ -4296,7 +4296,7 @@ MagickExport Image *UnsharpMaskImage(const Image *image,const double radius,
   assert(exception->signature == MagickCoreSignature);
   if (IsEventLogging() != MagickFalse)
     (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
-/* This kernel appears to be broken.
+/* OpenCL UnsharpMask kernel appears to be broken.
 #if defined(MAGICKCORE_OPENCL_SUPPORT)
   unsharp_image=AccelerateUnsharpMaskImage(image,radius,sigma,gain,threshold,
     exception);
@@ -4304,6 +4304,12 @@ MagickExport Image *UnsharpMaskImage(const Image *image,const double radius,
     return(unsharp_image);
 #endif
 */
+#if defined(MAGICKCORE_METAL_SUPPORT)
+  unsharp_image=AccelerateUnsharpMaskImage(image,radius,sigma,gain,threshold,
+    exception);
+  if (unsharp_image != (Image *) NULL)
+    return(unsharp_image);
+#endif
   unsharp_image=BlurImage(image,radius,sigma,exception);
   if (unsharp_image == (Image *) NULL)
     return((Image *) NULL);

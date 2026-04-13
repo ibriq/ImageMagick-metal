@@ -19,7 +19,7 @@
 #ifndef MAGICKCORE_ACCELERATE_PRIVATE_H
 #define MAGICKCORE_ACCELERATE_PRIVATE_H
 
-#if defined(MAGICKCORE_OPENCL_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
 #include "MagickCore/morphology.h"
 #include "MagickCore/resample.h"
 #include "MagickCore/resize.h"
@@ -31,15 +31,15 @@
 extern "C" {
 #endif
 
-#if defined(MAGICKCORE_OPENCL_SUPPORT)
+#if defined(MAGICKCORE_OPENCL_SUPPORT) || defined(MAGICKCORE_METAL_SUPPORT)
 
 extern MagickPrivate Image
   *AccelerateBlurImage(const Image *,const double,const double,ExceptionInfo *),
   *AccelerateDespeckleImage(const Image *,ExceptionInfo *),
   *AccelerateLocalContrastImage(const Image *,const double,const double,
     ExceptionInfo *),
-  *AccelerateMotionBlurImage(const Image*,const double*,const size_t,
-    const OffsetInfo*,ExceptionInfo*),
+  *AccelerateMotionBlurImage(const Image *,const double *,const size_t,
+    const OffsetInfo *,ExceptionInfo *),
   *AccelerateResizeImage(const Image *,const size_t,const size_t,
     const ResizeFilter *,ExceptionInfo *),
   *AccelerateRotationalBlurImage(const Image *,const double,ExceptionInfo *),
@@ -50,16 +50,50 @@ extern MagickPrivate Image
 extern MagickPrivate MagickBooleanType
   AccelerateContrastImage(Image *,const MagickBooleanType,ExceptionInfo *),
   AccelerateContrastStretchImage(Image *,const double,const double,
-    ExceptionInfo*),
+    ExceptionInfo *),
   AccelerateEqualizeImage(Image *,ExceptionInfo *),
   AccelerateFunctionImage(Image *,const MagickFunction,const size_t,
     const double *,ExceptionInfo *),
   AccelerateGrayscaleImage(Image *,const PixelIntensityMethod,
     ExceptionInfo *),
   AccelerateModulateImage(Image *,const double,const double,const double,
-    const ColorspaceType, ExceptionInfo*);
+    const ColorspaceType,ExceptionInfo *);
 
-#endif /* MAGICKCORE_OPENCL_SUPPORT */
+#endif /* MAGICKCORE_OPENCL_SUPPORT || MAGICKCORE_METAL_SUPPORT */
+
+#if defined(MAGICKCORE_METAL_SUPPORT) && defined(MAGICKCORE_HDRI_SUPPORT)
+extern MagickPrivate MagickBooleanType
+  AccelerateBlurImageMetal(Image *,const double,const double,
+    ExceptionInfo *),
+  AccelerateContrastImageMetal(Image *,const MagickBooleanType,
+    ExceptionInfo *),
+  AccelerateFunctionImageMetal(Image *,const MagickFunction,const size_t,
+    const double *,ExceptionInfo *),
+  AccelerateGrayscaleImageMetal(Image *,const PixelIntensityMethod,
+    ExceptionInfo *),
+  AccelerateModulateImageMetal(Image *,const double,const double,const double,
+    const ColorspaceType,ExceptionInfo *);
+
+extern MagickPrivate MagickBooleanType
+  AccelerateContrastStretchImageMetal(Image *,const double,const double,
+    ExceptionInfo *),
+  AccelerateEqualizeImageMetal(Image *,ExceptionInfo *);
+
+extern MagickPrivate Image
+  *AccelerateDespeckleImageMetal(const Image *,ExceptionInfo *),
+  *AccelerateLocalContrastImageMetal(const Image *,const double,const double,
+    ExceptionInfo *),
+  *AccelerateMotionBlurImageMetal(const Image *,const double *,const size_t,
+    const OffsetInfo *,ExceptionInfo *),
+  *AccelerateResizeImageMetal(const Image *,const size_t,const size_t,
+    const ResizeFilter *,ExceptionInfo *),
+  *AccelerateRotationalBlurImageMetal(const Image *,const double,
+    ExceptionInfo *),
+  *AccelerateUnsharpMaskImageMetal(const Image *,const double,const double,
+    const double,const double,ExceptionInfo *),
+  *AccelerateWaveletDenoiseImageMetal(const Image *,const double,
+    ExceptionInfo *);
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }
