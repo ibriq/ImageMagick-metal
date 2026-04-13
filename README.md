@@ -99,9 +99,11 @@ This version of ImageMagick includes experimental support for GPU acceleration u
 To build ImageMagick with Metal support enabled, configure with the `--enable-metal` flag:
 
 ```bash
-./configure --enable-metal
+./configure --enable-metal --enable-hdri
 make
 ```
+
+**Note:** Metal acceleration requires HDRI (High Dynamic Range Imaging) to be enabled. Non-HDRI builds will fall back to CPU.
 
 ### Usage
 Metal acceleration is enabled by default when built with `--enable-metal`. To verify that Metal is being used, you can enable debug logging:

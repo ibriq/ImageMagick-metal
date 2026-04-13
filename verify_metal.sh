@@ -27,11 +27,19 @@ else
     exit 1
 fi
 
-if grep -q "pipeline.*kernel" metal.log; then
+if grep -qi "pipeline.*kernel" metal.log; then
     echo "SUCCESS: Metal kernel acquired."
 else
     echo "WARNING: specific kernel log not found, check implementation."
 fi
 
 echo "Comparing results..."
-./utilities/magick compare -metric RMSE reference.png metal_out.png null: || true
+RMSE=$(./utilities/magick compare -metric RMSE reference.png metal_out.png null: 2>&1 || true)
+echo "RMSE: $RMSE"
+# Fail if RMSE exceeds threshold (first field is the raw value)
+RAW=$(echo "$RMSE" | awk -F'[( )]' '{print $1}')
+if [ -n "$RAW" ] && [ "$(echo "$RAW > 100" | bc -l 2>/dev/null)" = "1" ]; then
+    echo "FAILURE: Metal output differs significantly from reference (RMSE=$RAW)"
+    exit 1
+fi
+echo "SUCCESS: Metal output matches reference within tolerance."

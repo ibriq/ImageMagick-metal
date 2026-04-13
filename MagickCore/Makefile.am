@@ -35,9 +35,10 @@ MAGICKCORE_PKGCONFIG = \
 
 OSX_GCOV_LDFLAG = @OSX_GCOV_LDFLAG@
 
-MAGICKCORE_METAL_SRCS =
 if MAGICKCORE_METAL_SUPPORT
 MAGICKCORE_METAL_SRCS = MagickCore/metal.m MagickCore/accelerate-metal.c
+else
+MAGICKCORE_METAL_SRCS =
 endif
 # Override the linker for libMagickCore — automake picks OBJCLD due to
 # the .m file but libtool cannot always infer the ObjC tag.  The C
